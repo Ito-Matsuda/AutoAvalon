@@ -16,6 +16,10 @@ import java.util.Random;
  * 		-> Method would be called many times in most cases where an important decision is made 
  * 	Implement the thing for choosing Merlin / Mordred in the end
  * 	Implement the kings token thing (use the index of the arrays?)
+ * 
+ * NOTES --> 10/10 to reduce code duplication, make the turn functions call a choosing thing depending
+ * 			on number of victories
+ * 			Example) if(badGuyWins == 0) badNoWins(); else if (badGuyWins == 2) callInMerlinDotJpeg();
  */
 
 public class game {
@@ -299,58 +303,24 @@ public class game {
 	 * @param gameMode --> doesnt matter right now
 	 */
 	public static void turn2Choose(int whoChooses, int gameMode){
-		int toChoose = 0;
-		int chosenP =0;
-		int[] suspec = playerz[whoChooses].getSuspects(); // Pull out your suspect list
 		// Still only the second round so meh
 		// Incorporate bad guys into same
 		// SO THAT the other statement is even reachable, for the FIRST TURN
 		// bad guy may fail 1st just for giggles (probably a 70% chance)
 			if(badGuyWins == 1){ // bad guys for some reason won first round?
-				for (int i = 0; i < 6; i++){
-					if (toChoose == 2){
-						break; // No need to choose any other players
-					}
-					else if (i == whoChooses){ // Still need to choose players 
-						continue; // Can't choose yourself twice
-					}
-					else if (suspec[i] >= 100){ 
-						/* Good guy or bad guy, they'll only "try" to choose good guys
-						 * LOGIC for bad guy
-						 * Only bad guy, will choose defeat putting baddies up 2-0
-						 * Still builds some sort of trust
-						 * Leads to commotion amongst other 2 players trying to defend themselves
-						 */
-						playersChosen[i] = 1; // Choose em
-						System.out.println("Player " + whoChooses + " has chosen Player " + i 
-								+ " to adventure!");
-						toChoose ++; // Increment
-					}
-				}
+					loop2Choose(2,whoChooses,99);
 			} // End bad guys first victory conditional
 			else{ // Good guys won blessed
-				// Should theoretically choose the same people as last time 
-				for (int i = 0; i < 6; i++){
-					if (toChoose == 2){ // 
-						break; // No need to choose any other players
-					}
-					else if (i == whoChooses){ // Still need to choose players 
-						continue; // Can't choose yourself twice
-					}
-					else if (suspec[i] > 101){ // Person is reasonably trustworthy
-						// In this position, bad guy will lose here to get score to 1-1
-						// UNLESS NEXT PERSON IS A BADDIE, then they will win
-						// Next baddie selects same people, but then they lose
-						// that "next" baddie now has trust
-						// Here greater than 100 because the first round WILL build trust
-						// ie) the playerz[whoChooses] suspect array will have the people
-						// who went on the first mission (was a success) as a 110 or something
-						playersChosen[i] = 1; // Choose em
-						System.out.println("Player " + whoChooses + " has chosen Player " + i 
-								+ " to adventure!");
-						toChoose ++; // Increment
-					}
-				}
+				// Should theoretically choose the same people as last time
+				loop2Choose(2,whoChooses,101);
+				/* Person is reasonably trustworthy
+				In this position, bad guy will lose here to get score to 1-1
+				UNLESS NEXT PERSON IS A BADDIE, then they will win
+				Next baddie selects same people, but then they lose
+				that "next" baddie now has trust
+				Here greater than 100 because the first round WILL build trust
+				ie) the playerz[whoChooses] suspect array will have the people
+				who went on the first mission (was a success) as a 110 or something */	
 			}  
 	} // End turn2Choose
 	
@@ -365,56 +335,40 @@ public class game {
 		int[] suspec = playerz[whoChooses].getSuspects(); // Pull out your suspect list
 		// Third round so get ready
 			if(badGuyWins == 2){ // bad guys verge of victory
-				for (int i = 0; i < 6; i++){
-					if (toChoose == 2){
-						break; // No need to choose any other players
-					}
-					else if (i == whoChooses){ // Still need to choose players 
-						continue; // Can't choose yourself twice
-					}
-					else if (suspec[i] >= 75 && playerz[whoChooses].getAlliance() == 0){ // Good guy decision 
-						playersChosen[i] = 1; // Choose em
-						System.out.println("Player " + whoChooses + " has chosen Player " + i 
-								+ " to adventure!");
-						toChoose ++; // Increment
-					}
-					else if (playerz[whoChooses].getAlliance() == 1){ // Bad guy has to choose
+				if(playerz[whoChooses].getAlliance() == 0){
+					loop2Choose(2,whoChooses,74);
+				}
+				else if (playerz[whoChooses].getAlliance() == 1){ // Bad guy has to choose
 						// Given how I choose to implement Merlin "ai" -not really ai tbh-
 						// Whoever the bad guy chooses may not matter because Merlin may override it
-						// So in this case, bad guy may choose other baddie (not Mordred to hide him)
-						if(playerz[i].getAlliance() == 1 && badGuyQuota == 0){ // Choose at least one baddie
-							playersChosen[i] = 1; // Choose the baddie
-							System.out.println("Player " + whoChooses + " has chosen Player " + i 
-									+ " to adventure!");
-							toChoose ++;
-						}
-						else { // Choose goodies
-							playersChosen[i] = 1; // Choose em
-							System.out.println("Player " + whoChooses + " has chosen Player " + i 
-									+ " to adventure!");
-							toChoose ++; // Increment
-						// As of right now, this may end up with the baddie choosing 2 good guys
-						// That is ok, because the bad guys ai will still -try to- fail it
-						// Merlin should stop this mission unless Mordred is known i guess
+						// So in this case, bad guy may choose other baddie (may or may not be Mordred)
+						loop2ChooseBad(2,whoChooses,1);
+						// Merlin should stop this mission unless Mordred is known for sure i guess
+						
 						}
 					}
+			else if (badGuyWins == 1){ // It's tied
+				loop2Choose(2,whoChooses,101);
+				// 101 kinda arbitrary, but still indicates trustworthiness as baddies
+				// would have some sort of negative number
+				// Even if a bad guy, still chooses good guys for "trust" building
+				// The bad guy would fail it anyways
+			}
+			else{ /* badGuys have not won a single game
+				  Should have a case for Merlin??? where he only selects goodies? They should all agree
+				  If so then it's technically an insta victory for good guys as long as 
+				  none of the good guys think Merlin is bad lul
+				  */
+				if (playerz[whoChooses].getCharacterN().equals("Merlin")){
+					loop2Choose(2,whoChooses,0);
+					// Select 2 players, 0 just in case for some reason Merlin suspects people
+					// Baddies will always be < -100 so thats not a worry
+				}// End Merlin ensuring victory
+				else if (playerz[whoChooses].getAlliance() == 0){
+					loop2Choose(2,whoChooses,120);
+					// Select 2 players, 120 currently an arbitrary number for choosing who's in
 				}
-			} // End bad guys about to win
-			else{ // Good guys won blessed
-				// Should theoretically choose the same people as last time 
-				for (int i = 0; i < 6; i++){
-					if (toChoose == 2){ // 
-						break; // No need to choose any other players
-					}
-					else if (i == whoChooses){ // Still need to choose players 
-						continue; // Can't choose yourself twice
-					}
-					else if (suspec[i] > 101){ 
-						playersChosen[i] = 1; // Choose em
-						toChoose ++; // Increment
-					}
-				}
-			}  
+			}
 	} // End turn3Choose
 	
 	/**
@@ -434,6 +388,45 @@ public class game {
 	public static void turn5Choose(int whosChooses, int gameMode){
 		
 	}
+	
+	/**
+	 * Purpose is to loop through the suspect array of who's choosing and choose
+	 * the appropriate adventurers 
+	 * @param numberToPick -> The amount of adventures to pick
+	 * @param whoChooses -> Who has choice
+	 * @param suspectAmount -> The allowable amount (or lack) of suspicion to go on the mission 
+	 */
+	public static void loop2Choose(int numberToPick, int whoChooses, int suspectAmount){
+		int[] suspec = playerz[whoChooses].getSuspects(); // Pull out your suspect list
+		int numberChosen = 0;
+		for(int i = 0; i < 6; i++){
+			if (numberChosen == numberToPick){
+				break; // Get outta here you finished here
+			}
+			else if(i == whoChooses){
+				continue; // You cannot select yourself (already have) to keep saying you good
+			}
+			else if (suspec[i] > suspectAmount){
+				System.out.println("Player " + whoChooses + " has chosen player " + i 
+						+ " for the adventure");
+				playersChosen[i] = 1; // Select them
+				numberChosen++; // Increment
+			}
+		}
+	} // End loop2Choose
+	
+	/**
+	 * Choosing but for bad guys, bad guys may want to choose other bad guys for a variety of reasons
+	 * 	1) Build trust with the good guy who also went on the adventure
+	 *  2) Have the enemy look like the bad guy yada yada
+	 * @param numberToPick -> Amount of adventurers to pick
+	 * @param whoChooses -> Who has choice
+	 * @param numBaddy -> Number of baddies they want to choose
+	 */
+	public static void loop2ChooseBad(int numberToPick, int whoChooses, int numBaddy){
+		//This function may still elect to choose only good guys lul
+	}
+	
 	/**
 	 * Ideally, this would take an object / index (int), then cross check
 	 * everyone else's "suspect" array to see if they allow it. Would also need
