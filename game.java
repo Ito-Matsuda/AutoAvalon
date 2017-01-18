@@ -425,7 +425,46 @@ public class game {
 	 */
 	public static void loop2ChooseBad(int numberToPick, int whoChooses, int numBaddy){
 		//This function may still elect to choose only good guys lul
-	}
+		int[] suspec = playerz[whoChooses].getSuspects();
+		int numberChosen = 0;
+		int i = 0;
+		int baddieChosen = 0;
+		boolean baddiesChosen = false;
+		while (baddiesChosen == false){
+			if (baddieChosen == numBaddy){
+				baddiesChosen = true;
+				break;
+				// Get me outta here
+			}
+			if(i == whoChooses){
+				continue;
+			}
+			else if (playerz[i].getAlliance() == 1){
+				// They want to choose baddies
+				playersChosen[i] = 1;
+				baddieChosen++;
+				numberChosen++;
+			}
+		}
+		// Choose the good guys
+		for(i = 0; i < 6; i++){
+			if (numberChosen == numberToPick){
+				break; 
+				// Exit the loop no more need to loop
+			}
+			if(i == whoChooses){
+				continue;
+			}
+			else if (playerz[i].getAlliance() == 1){
+				// Do not want to choose baddies
+				continue; // Skip over them
+			}
+			else if (playerz[i].getAlliance() == 0){
+				playersChosen[i] = 1;
+				numberChosen++;
+			}
+		}
+	} // End loop2Choose
 	
 	/**
 	 * Ideally, this would take an object / index (int), then cross check
