@@ -9,6 +9,7 @@ import java.util.Random;
  * 	
  * 	A lot of the code is just comments
  * -- info -- means strikethrough, idea was had but not expanded / dont like anymore
+ * 
  * TODO
  * 	Finish Some of turn3Choose, All of turn4Choose, turn5choose
  * 	Start rejection method
@@ -20,6 +21,14 @@ import java.util.Random;
  * NOTES --> 10/10 to reduce code duplication, make the turn functions call a choosing thing depending
  * 			on number of victories
  * 			Example) if(badGuyWins == 0) badNoWins(); else if (badGuyWins == 2) callInMerlinDotJpeg();
+ * 		--> Do not forget to reset your playersChosen array after each decision goes through
+ * 
+ * NOTABLE ERRORS
+ * 		Currently in turn2Choose an error has been brought up where the decision of choosing
+ * 		the same people as last -successful- turn may be funky
+ * 
+ * CHANGELOG
+ * 		
  */
 
 public class game {
@@ -172,14 +181,13 @@ public class game {
 		boolean noReject = false;
 		for (int turnCount = 1; turnCount <= turns; turnCount++) { // 1,2,3,4,5
 			while (noReject == false) {
-				selectPlayers(whoIsKing, turnCount); // Step 1 select the
-														// players to go on the
-														// mission
+				selectPlayers(whoIsKing, turnCount);
+				// Step 1 select the players to go on the mission
 				// Step 2 Reject players etc influence stuff
 				noReject = rejection(10); // 10 is just a filler number
 
-				if (whoIsKing == 6) { // If somehow nobody can agree on a team
-										// comp (2 healers pls)
+				if (whoIsKing == 6) { 
+					// If somehow nobody can agree on a team comp (2 healers pls)
 					whoIsKing = 0; // Reset King powers to first one
 					// In this case, I'd say that if this is reached, then an
 					// infinite loop may occur
@@ -270,30 +278,14 @@ public class game {
 	 *            --> 7 player game mode, 8 player etc doesnt matter for now
 	 */
 	public static void turn1Choose(int whoChooses, int gameMode) {
-		int chosenP = 0;
-		if (playerz[whoChooses].getAlliance() == 0) { // Good guy
-			if (whoChooses != 6) { // Cant pick the next one if you are the last
-				chosenP = whoChooses + 1; // First round, select somebody
-				playersChosen[chosenP] = 1; // Now chosen
-			} else { // You are the last player
-				chosenP = whoChooses - 1;
-				playersChosen[chosenP] = 1; // Now chosen
-				System.out.println("Player " + whoChooses + " has chosen Player " + chosenP 
-						+ " to adventure!");
-			}
+		if (playerz[whoChooses].getAlliance() == 0) { // Good guy chooses arbitrarily
+			loop2Choose(1,whoChooses,0);
+			// Choose one more player, probably chooses first one they run into
+			// In the first turn, everyone claims they are good anyways
 		} // End good guy statement
 		else { // They are a baddie
-			boolean done = false;
-			int i = 0;
-			while (done == false) { // Loop until you find a good guy
-				if (playerz[i].getAlliance() == 0) { // Pick a good guy to get on their good side
-					playersChosen[i] = 1;
-					System.out.println("Player " + whoChooses + " has chosen Player " + i 
-							+ " to adventure!");
-					done = true; // get outta here
-				}
-				i++; // Move onto the next dude
-			}
+			loop2ChooseBad(1,whoChooses,0);
+			//Choose one other person, zero baddies
 		} // End bad guy statment
 	} // End turn1Choose
 
@@ -303,24 +295,23 @@ public class game {
 	 * @param gameMode --> doesnt matter right now
 	 */
 	public static void turn2Choose(int whoChooses, int gameMode){
-		// Still only the second round so meh
-		// Incorporate bad guys into same
 		// SO THAT the other statement is even reachable, for the FIRST TURN
-		// bad guy may fail 1st just for giggles (probably a 70% chance)
+		// bad guy may fail 1st just for giggles (probably a 70% chance) to create chaos
+		// At this point, good and bad should be playing same strategy
 			if(badGuyWins == 1){ // bad guys for some reason won first round?
-					loop2Choose(2,whoChooses,99);
+				loop2Choose(2,whoChooses,99);
+				
 			} // End bad guys first victory conditional
 			else{ // Good guys won blessed
 				// Should theoretically choose the same people as last time
-				loop2Choose(2,whoChooses,101);
-				/* Person is reasonably trustworthy
-				In this position, bad guy will lose here to get score to 1-1
-				UNLESS NEXT PERSON IS A BADDIE, then they will win
-				Next baddie selects same people, but then they lose
-				that "next" baddie now has trust
-				Here greater than 100 because the first round WILL build trust
-				ie) the playerz[whoChooses] suspect array will have the people
-				who went on the first mission (was a success) as a 110 or something */	
+				loop2Choose(2,whoChooses,104);
+				// Chooses the same people as the last mission -their suspect woulda increased
+				/*
+				 * POSSIBLE ERROR
+				 * What happens if it's Merlin's / Percival's turn to choose???
+				 * Their suspect arrays have negative numbers so what if those negative numbers
+				 * Coincide with the people chosen last turn???
+				 */
 			}  
 	} // End turn2Choose
 	
@@ -330,13 +321,10 @@ public class game {
 	 * @param gameMode --> does nothing yet
 	 */
 	public static void turn3Choose(int whoChooses, int gameMode){
-		int toChoose = 0;
-		int badGuyQuota = 0;
-		int[] suspec = playerz[whoChooses].getSuspects(); // Pull out your suspect list
 		// Third round so get ready
 			if(badGuyWins == 2){ // bad guys verge of victory
 				if(playerz[whoChooses].getAlliance() == 0){
-					loop2Choose(2,whoChooses,74);
+					loop2Choose(2,whoChooses,55);
 				}
 				else if (playerz[whoChooses].getAlliance() == 1){ // Bad guy has to choose
 						// Given how I choose to implement Merlin "ai" -not really ai tbh-
@@ -425,25 +413,34 @@ public class game {
 	 */
 	public static void loop2ChooseBad(int numberToPick, int whoChooses, int numBaddy){
 		//This function may still elect to choose only good guys lul
-		int[] suspec = playerz[whoChooses].getSuspects();
+		// int[] suspec = playerz[whoChooses].getSuspects(); useless because baddies go off Alliance
 		int numberChosen = 0;
 		int i = 0;
 		int baddieChosen = 0;
 		boolean baddiesChosen = false;
 		while (baddiesChosen == false){
+			// Check this first because if player wants to select no baddies this breaks immediately
 			if (baddieChosen == numBaddy){
 				baddiesChosen = true;
 				break;
 				// Get me outta here
 			}
 			if(i == whoChooses){
+				i++; // Increment
+				continue;
+			}
+			else if (playerz[i].getAlliance() == 0){
+				i++; // Increment
 				continue;
 			}
 			else if (playerz[i].getAlliance() == 1){
 				// They want to choose baddies
 				playersChosen[i] = 1;
 				baddieChosen++;
+				System.out.println("Player " + whoChooses + " has chosen player " + i 
+						+ " for the adventure");
 				numberChosen++;
+				i++; // Increment
 			}
 		}
 		// Choose the good guys
@@ -454,6 +451,7 @@ public class game {
 			}
 			if(i == whoChooses){
 				continue;
+				// Do not choose yourself
 			}
 			else if (playerz[i].getAlliance() == 1){
 				// Do not want to choose baddies
@@ -462,9 +460,11 @@ public class game {
 			else if (playerz[i].getAlliance() == 0){
 				playersChosen[i] = 1;
 				numberChosen++;
+				System.out.println("Player " + whoChooses + " has chosen player " + i 
+						+ " for the adventure");
 			}
 		}
-	} // End loop2Choose
+	} // End loop2ChooseBad
 	
 	/**
 	 * Ideally, this would take an object / index (int), then cross check
