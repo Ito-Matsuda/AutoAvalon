@@ -18,6 +18,8 @@ import java.util.Random;
  * 	Implement the thing for choosing Merlin / Mordred in the end
  * 	Implement the kings token thing (use the index of the arrays?)
  * 
+ *	IMPLEMENT PERCIVAL CHOOSING FOR TURN 4 AND 5
+ * 
  * NOTES --> 10/10 to reduce code duplication, make the turn functions call a choosing thing depending
  * 			on number of victories
  * 			Example) if(badGuyWins == 0) badNoWins(); else if (badGuyWins == 2) callInMerlinDotJpeg();
@@ -26,6 +28,8 @@ import java.util.Random;
  * NOTABLE ERRORS
  * 		Currently in turn2Choose an error has been brought up where the decision of choosing
  * 		the same people as last -successful- turn may be funky
+ * 
+ * 		*** INCORPORATE THE MONTY HALL PROBLEM INTO GUESSING MORDRED --is this even possible? ***
  * 
  * CHANGELOG
  * 		
@@ -332,9 +336,11 @@ public class game {
 						// So in this case, bad guy may choose other baddie (may or may not be Mordred)
 						loop2ChooseBad(2,whoChooses,1);
 						// Merlin should stop this mission unless Mordred is known for sure i guess
-						
 						}
-					}
+				// Could have a percival seperate statement here, 
+				// but he can still choose the other 2 good guys w/o deciding between morg and merl
+				
+				} // End badGuy2Wins
 			else if (badGuyWins == 1){ // It's tied
 				loop2Choose(2,whoChooses,101);
 				// 101 kinda arbitrary, but still indicates trustworthiness as baddies
@@ -342,7 +348,7 @@ public class game {
 				// Even if a bad guy, still chooses good guys for "trust" building
 				// The bad guy would fail it anyways
 			}
-			else{ /* badGuys have not won a single game
+			else{ /* badGuys have somehow not won a single game
 				  Should have a case for Merlin??? where he only selects goodies? They should all agree
 				  If so then it's technically an insta victory for good guys as long as 
 				  none of the good guys think Merlin is bad lul
@@ -351,7 +357,7 @@ public class game {
 					loop2Choose(2,whoChooses,0);
 					// Select 2 players, 0 just in case for some reason Merlin suspects people
 					// Baddies will always be < -100 so thats not a worry
-				}// End Merlin ensuring victory
+				}// End Merlin "ensuring" victory
 				else if (playerz[whoChooses].getAlliance() == 0){
 					loop2Choose(2,whoChooses,120);
 					// Select 2 players, 120 currently an arbitrary number for choosing who's in
@@ -363,19 +369,73 @@ public class game {
 	 *  Choose 3 other adventurers
 	 * @param whosChooses --> who has kingsToken
 	 * @param gameMode --> does nothing yet
+	 * iirc bad guys need 2 rejects here?
 	 */
 	public static void turn4Choose(int whoChooses, int gameMode){
-		
-	}
+		if(badGuyWins == 2){
+			if(playerz[whoChooses].getCharacterN().equals("Merlin")){
+				// Merlin pulls out the stops
+				loop2Choose(3,whoChooses,0);
+			}
+			// Needs a percival statement where he GOMBLES it on Merlin / Morg
+			else if (playerz[whoChooses].getAlliance() == 0){ // (mostly) Regular goodie
+				loop2Choose(3,whoChooses,65); 
+				// Should be mostly same number as turn3Choose where baddies have 2 wins
+				// Should be slightly higher because that means they survived the third round
+			}
+			else{
+				// They be bad
+				loop2ChooseBad(3, whoChooses,2);
+			}
+		}
+		else{ // Bad guys 1, good guys 2
+			if(playerz[whoChooses].getCharacterN().equals("Merlin")){
+				// WIN WIN WIN
+				// Should really be a trigger for baddies to snipe out merlin though
+				loop2Choose(3,whoChooses,0);
+			}
+			else if (playerz[whoChooses].getAlliance() == 0){ 
+				// (mostly) Regular goodie, Percival should operate under same logic
+				// 
+				loop2Choose(3,whoChooses,110); 
+				// Should be slightly above 100 or slightly below 100 depending
+				// on how I decide to implement what takes more or gives more to trust
+			}
+			else{
+				// They be bad
+				loop2ChooseBad(3, whoChooses,0);
+				// Cause CHAOS?!? --> only in real life but hey we can try and simulate
+			}
+		} // End bad guys decision
+	} // End turn4Choose
 	
 	/**
 	 * Choose 3 other adventurers
-	 * @param whosChooses --> who has kingsToken
+	 * @param whoChooses --> who has kingsToken
 	 * @param gameMode --> does nothing yet
 	 */
-	public static void turn5Choose(int whosChooses, int gameMode){
+	public static void turn5Choose(int whoChooses, int gameMode){
+		// It's game 5 for Evo 2017 it can and will go either way
+		// No need for bad guy wins == 2 because it's 2-2
 		
-	}
+		if(playerz[whoChooses].getCharacterN().equals("Merlin")){
+			// Always try and go for W, unless have faith in sniping Morg
+			loop2Choose(3,whoChooses,0);
+		}
+		// Like turn4Choose, should be a percival statement b/c he "knows" at least one good guy
+		else if (playerz[whoChooses].getAlliance() == 0){
+			loop2Choose(3,whoChooses,50);
+		}
+		else if(playerz[whoChooses].getAlliance() == 1){
+			// LOSE LOSE LOSE
+			loop2ChooseBad(3,whoChooses,0);
+			/* If you want it to be better / more realistic 
+			 * should make a method where the bad guy takes input
+			 * From the other people.
+			 */ 
+		}
+		
+	} // End turn5Choose
 	
 	/**
 	 * Purpose is to loop through the suspect array of who's choosing and choose
@@ -410,6 +470,9 @@ public class game {
 	 * @param numberToPick -> Amount of adventurers to pick
 	 * @param whoChooses -> Who has choice
 	 * @param numBaddy -> Number of baddies they want to choose
+	 * 		Because as long as one bad guy exists, numBaddy can realistcally just be zero
+	 * 		But you want to build up trust on early missions so optimal choice is to select
+	 * 		Another baddie for early missions
 	 */
 	public static void loop2ChooseBad(int numberToPick, int whoChooses, int numBaddy){
 		//This function may still elect to choose only good guys lul
