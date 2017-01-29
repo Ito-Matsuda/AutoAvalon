@@ -1,4 +1,5 @@
-import java.util.Random;
+//import java.util.Random;
+import java.util.*;
 
 /*
  * Rules to "Avalon" may be found here --> http://upload.snakesandlattes.com/rules/r/ResistanceAvalon.pdf
@@ -174,9 +175,8 @@ public class game {
 	}
 
 	/**
-	 * Handles the bulk by going through the turns of the game There are 5 turns
-	 * and on the 4th turn baddies need 2 wins Should this be in a for loop?
-	 * 
+	 *  Handles the control flow of the entire program
+	 * 		Special case: Turn4 Bad guys need 2 "fails" to win
 	 * MUST IMPLEMENT CASE WHERE THEY REJECT -->if its the last person, kings
 	 * counter blah blah need a while loop for the select players process
 	 */
@@ -184,12 +184,12 @@ public class game {
 		int whoIsKing = 0; // Number for who is KING
 		boolean noReject = false;
 		for (int turnCount = 1; turnCount <= turns; turnCount++) { // 1,2,3,4,5
-			while (noReject == false) {
+			while (noReject == false) { 
 				selectPlayers(whoIsKing, turnCount);
 				// Step 1 select the players to go on the mission
 				// Step 2 Reject players etc influence stuff
-				noReject = rejection(10); // 10 is just a filler number
-
+				noReject = rejection(4,turnCount); // 4 because 4 is majority in 7 player
+				
 				if (whoIsKing == 6) { 
 					// If somehow nobody can agree on a team comp (2 healers pls)
 					whoIsKing = 0; // Reset King powers to first one
@@ -198,19 +198,22 @@ public class game {
 					System.out.println("This really should not be reached...");
 					System.exit(0); // Get outta here
 				}
-				whoIsKing++; // If not out of the loop, then put the next person
-								// as the King
+				whoIsKing++; // If not out of the loop, then put the next person as the King
+				Arrays.fill(playersChosen, 0); // Re-initialize everything to zero
 			} // End the rejection loop
-				// Step 3 check if fail or pass influence things IF TURN 4 needs
-				// two fails
+			
+			// Step 3, check the results of the quest, remember, turn 4 needs 2 fails
+			
+			// Step 4, Check the count of good and bad guy wins
 			if (goodGuyWins == 3) { // If good guy count == 3 --> chooseMerlin
 				System.out.println("Good guys win! Bad must snipe Merlin");
 				chooseMerlin();
-			} else if (badGuyWins == 3) { // else if bad guy count == 3 -->
-											// chooseMordred
+			} else if (badGuyWins == 3) { // else if bad guy count == 3 chooseMordred
 				System.out.println("Bad guys win! Good must snipe Mordred");
 				chooseMordred();
 			}
+			// Step 5, reset the "selection" array to all zeros, as if no one was chosen
+			Arrays.fill(playersChosen, 0); // Chosen array now has no one in it
 		} // End turns loop
 	} // End goThroughTurns
 
@@ -230,16 +233,15 @@ public class game {
 			System.out.println("Turn 1 Good:" + goodGuyWins + "\nBad:" + badGuyWins + "\nSelecting adventurers:");
 			playersChosen[whosChoosing] = 1; // 1 Means chosen, also choose themselves
 			System.out.println("Player " + whosChoosing + "has elected themselves for adventure!");
-			// could call something here to see if anyone rejects but it's the
-			// first round
-			// turn1Choose(whosChoosing,7);
+			// could call something here to see if anyone rejects but it's the first round
+			turn1Choose(whosChoosing,7);
 		} else if (whichTurn == 2) {
 			System.out.println("Turn 2 Good:" + goodGuyWins + "\nBad:" + badGuyWins + "\nSelecting adventurers:");
 			playersChosen[whosChoosing] = 1;
 			System.out.println("Player " + whosChoosing + "has elected themselves for adventure!");
 			// again, could call some sort of rejection function but it's the
 			// second turn
-			// turn2Choose(whosChoosing,7);
+			turn2Choose(whosChoosing,7);
 		} else if (whichTurn == 3) { // have to start checking which team is in
 										// danger of winning
 			System.out.println("Turn 3 Good:" + goodGuyWins + "\nBad:" + badGuyWins + "\nSelecting adventurers:");
@@ -254,21 +256,21 @@ public class game {
 			 * dont forget to change the "1" back to a zero if rejected by
 			 * majority
 			 */
-			// turn3Choose(whosChoosing,7);
+			turn3Choose(whosChoosing,7);
 		} else if (whichTurn == 4) { // must check who's in danger of winning,
 										// needs 2 defeats
 			System.out.println("Turn 4 Good:" + goodGuyWins + "\nBad:" + badGuyWins + "\nSelecting adventurers:");
 			playersChosen[whosChoosing] = 1;
 			System.out.println("Player " + whosChoosing + "has elected themselves for adventure!");
 			// same rejection idea as whichTurn 3
-			// turn4Choose(whosChoosing,7);
+			turn4Choose(whosChoosing,7);
 		} else if (whichTurn == 5) { // must check who's in danger of winning,
 										// needs 1 defeat
 			System.out.println("Turn 5 Good:" + goodGuyWins + "\nBad:" + badGuyWins + "\nSelecting adventurers:");
 			playersChosen[whosChoosing] = 1;
 			System.out.println("Player " + whosChoosing + "has elected themselves for adventure!");
 			// same rejection idea as whichTurn 3
-			// turnChoose5(whosChoosing,7);
+			turn5Choose(whosChoosing,7);
 		}
 	} // End selectPlayers
 
@@ -303,7 +305,8 @@ public class game {
 		// bad guy may fail 1st just for giggles (probably a 70% chance) to create chaos
 		// At this point, good and bad should be playing same strategy
 			if(badGuyWins == 1){ // bad guys for some reason won first round?
-				loop2Choose(2,whoChooses,99);
+				loop2Choose(2,whoChooses,80);
+				// 80 because nani, howd we lose first round, insta - distrust
 				
 			} // End bad guys first victory conditional
 			else{ // Good guys won blessed
@@ -342,8 +345,8 @@ public class game {
 				
 				} // End badGuy2Wins
 			else if (badGuyWins == 1){ // It's tied
-				loop2Choose(2,whoChooses,101);
-				// 101 kinda arbitrary, but still indicates trustworthiness as baddies
+				loop2Choose(2,whoChooses,100);
+				// 100 kinda arbitrary, but still indicates trustworthiness as baddies
 				// would have some sort of negative number
 				// Even if a bad guy, still chooses good guys for "trust" building
 				// The bad guy would fail it anyways
@@ -359,8 +362,9 @@ public class game {
 					// Baddies will always be < -100 so thats not a worry
 				}// End Merlin "ensuring" victory
 				else if (playerz[whoChooses].getAlliance() == 0){
-					loop2Choose(2,whoChooses,120);
-					// Select 2 players, 120 currently an arbitrary number for choosing who's in
+					loop2Choose(2,whoChooses,130);
+					// Select 2 players, 130 currently an arbitrary number for choosing who's in
+					// Should be synonymous with the "rejection function" 
 				}
 			}
 	} // End turn3Choose
@@ -530,19 +534,63 @@ public class game {
 	} // End loop2ChooseBad
 	
 	/**
-	 * Ideally, this would take an object / index (int), then cross check
-	 * everyone else's "suspect" array to see if they allow it. Would also need
-	 * to be seperated by an if / else (for good and bad) if(alliance == 0) -->
+	 * EDIT: Just use the public variable of playersChosen and use that index
+	 * 	ie) if playersChosen(i) == 1; // 1 means chosen
+	 * Cross check with everyone's arrays
+	 * Would also need to be seperated by an if / else (for good and bad) if(alliance == 0) -->
 	 * do these things, else --> This is needed because they take seperate
 	 * actions. Bad likes bad, good dislikes bad
-	 * 
-	 * @param toReject
-	 *            --> The person in question
+	 * <h1>
+	 * *** Possible Error / Fix / Better way of doing this ***
+	 * <br>
+	 * 	Should probably have it so that once a person is rejected, 
+	 *  the person choosing can choose another person
+	 * </h1>
+	 * <br>
+	 * @param maxReject --> Number of rejections it takes to get rid of a person
+	 * @param whatTurn --> used to determine the amount of "trust" it takes to NOT reject someone
 	 * @return --> True if player not rejected
 	 */
-	public static boolean rejection(int toReject) {
-		// Before returning, should have an increment based on current
-		// information
+	public static boolean rejection(int maxReject, int whatTurn) {
+		/*
+		 *  (?)Before returning, should have an increment based on current(?)
+		 *  Logic is to go through each 'chosen player' and before you go to the next 
+		 *  iteration, loop through everybody's personal 'suspect' array
+		 *  Gunna need 3 loop hooooh boy
+		 *  TODO --> Add a behaviour when a person gets rejected
+		 *  COULD you use Recursion??? this context doesnt make sense I think
+		 */
+		int trustometer = 0;
+		// Following trustometer things are for generic good guys, 
+		if (badGuyWins == 0){
+			trustometer = (100+(whatTurn*12)); 
+			// Trust goes up by maybe 12 for each successful turn?
+			// Example, if it's turn 3 and its 2 good guy wins, then need 136 trust?
+		}
+		else if (badGuyWins == 1){
+			trustometer = (80+((whatTurn-1)*12));
+			// Because baddies cannot start with a win, whatTurn - 1
+		}
+		else if (badGuyWins == 2){
+			trustometer = (50+((whatTurn-1)*12));
+			// At minimum turn 3
+		}
+		for (int i = 0; i < 6; i++){ // Loop through the playersChosen array
+			for (int j = 0; j < 6; j++){ // Loop through the playerz array
+				// Could put below if statement inside the for loop, but that just adds
+				// more comparisons 
+				if(playerz[j].getAlliance() == 0){ // If they are a guuci guy
+					for(int k = 0; k < 6; k++){ // Loop through each players suspect array
+
+					} // End going through the suspect arrays
+				}
+				else{ // Not so guuci
+					for(int k = 0; k < 6; k++){ // Loop through each players suspect array
+
+					} // End going through the suspect arrays
+				}
+			} // End going through everyone
+		} // End looping through playersChosen
 		return true; // If not rejected
 	}
 
@@ -577,8 +625,10 @@ public class game {
 			if (checkPlayer(whosThere).equals("Merlin")) {
 				System.out.println("Bad guys win off assasinating Merlin!");
 				System.out.println("Merlin was indeed player " + whosThere);
+				System.exit(0);
 			} else { // They guessed wrong
 				System.out.println("Bad guys could not kill Merlin \nGood guys win");
+				System.exit(0);  
 			}
 		} // End good guys won conditional
 		else { // Bad guys won
@@ -586,8 +636,10 @@ public class game {
 			if (checkPlayer(whosThere).equals("Mordred")) {
 				System.out.println("Good guys win off assasinating Mordred!");
 				System.out.println("Mordred was indeed player " + whosThere);
+				System.exit(0); 
 			} else {
 				System.out.println("Good guys could not kill Mordred \nBad guys win");
+				System.exit(0); 
 			}
 		} // End bad guys win conditional
 	} // End endGame
