@@ -554,13 +554,18 @@ public class game {
 	public static boolean rejection(int maxReject, int whatTurn) {
 		/*
 		 *  (?)Before returning, should have an increment based on current(?)
-		 *  Logic is to go through each 'chosen player' and before you go to the next 
-		 *  iteration, loop through everybody's personal 'suspect' array
-		 *  Gunna need 3 loop hooooh boy
-		 *  TODO --> Add a behaviour when a person gets rejected
-		 *  COULD you use Recursion??? this context doesnt make sense I think
+		 *  Logic is to select the first player going on a mission, then get 
+		 *  everybody's opinion on that one
+		 *  Only need 2 for loops (NOT THREE)
+		 *  TODO --> Add a behaviour when a person gets rejected,
+		 *  Decision Should probably be different logic Merlin / Percival
+		 *  The logic for a bad guy rejecting is meh
 		 */
+		// Trustometer, the amount of trust needed to not be rejected
 		int trustometer = 0;
+		int timesRejected = 0;
+		int[] suspects = new int[7];
+		int randomBehav;
 		// Following trustometer things are for generic good guys, 
 		if (badGuyWins == 0){
 			trustometer = (100+(whatTurn*12)); 
@@ -570,30 +575,75 @@ public class game {
 		else if (badGuyWins == 1){
 			trustometer = (80+((whatTurn-1)*12));
 			// Because baddies cannot start with a win, whatTurn - 1
+			
 		}
 		else if (badGuyWins == 2){
 			trustometer = (50+((whatTurn-1)*12));
 			// At minimum turn 3
 		}
+		// Get the opinion of everyone about the one person
 		for (int i = 0; i < 6; i++){ // Loop through the playersChosen array
-			for (int j = 0; j < 6; j++){ // Loop through the playerz array
+			if (playersChosen[i] == 0){
+				continue; // They were not chosen, go on to next person
+			}
+			for (int j = 0; j < 6; j++){ 
+				// Loop through the playerz array to get their opinion on player i
 				// Could put below if statement inside the for loop, but that just adds
 				// more comparisons 
 				if(playerz[j].getAlliance() == 0){ // If they are a guuci guy
-					for(int k = 0; k < 6; k++){ // Loop through each players suspect array
-
-					} // End going through the suspect arrays
+					suspects = playerz[j].getSuspects();
+					if (suspects[i] < trustometer){ // If the person is not trustworthy
+						timesRejected++; // Strike!
+						System.out.println("Player " + j + " has rejected player " 
+								+ i + ".");
+						// Call something to reduce trust between two people here?
+						}
+					else{
+						System.out.println("Nah you seem like a good guy");
+						// add build trust here
+					}
 				}
 				else{ // Not so guuci
-					for(int k = 0; k < 6; k++){ // Loop through each players suspect array
-
-					} // End going through the suspect arrays
+					randomBehav = randomNumber(1,10);
+					if(playerz[i].getAlliance() == 1 && randomBehav <=2){ // 20% chance to reject
+						timesRejected++; // Strike!
+						System.out.println("Player.. ps Im bad " + j + " has rejected player " 
+								+ i + ".");
+						// no reduce trust here (because both are bad guys)
+						// instead have this build trust with the people who also disagree
+					}
+					else if(playerz[i].getAlliance() == 0 && randomBehav <= 2){ // 20% chance to reject good
+						timesRejected++; // Strike!
+						System.out.println("Player.. ps Im bad " + j + " has rejected player " 
+								+ i + ".");
+						// have rejected persons trust decreased towards this -bad- guy
+					}
+					else{
+						System.out.println("Nah you seem like a good guy. PS im bad");
+						// add build trust
+					}
 				}
 			} // End going through everyone
+			if (timesRejected >= maxReject){
+				System.out.println("Player " + i + " has been rejected by the majority."); 
+				// Maybe instead return a number ?
+				return false; // Majority says no to person x to going on mission
+			}
 		} // End looping through playersChosen
 		return true; // If not rejected
-	}
+	} // End rejection
 
+	/**
+	 * Just a function to help with the 'chance' of the game
+	 * @param min --> Min of range
+	 * @param max --> Max of range
+	 * @return
+	 */
+	public static int randomNumber(int min, int max){
+		int range = (max - min) +1;
+		int number = (int)(Math.random()*range)+min;
+		return number;
+	}
 	/**
 	 * Method currently used for the endgame where the losing team must snipe
 	 * the enemy leader -Aside- this can also eventually be used for Lady of the
