@@ -12,13 +12,9 @@ import java.util.*;
  * -- info -- means strikethrough, idea was had but not expanded / dont like anymore
  * 
  * TODO
- * 	Finish Some of turn3Choose, All of turn4Choose, turn5choose
- * 	Start rejection method
- * 	Implement a method that handles the increase or decrease of suspect arrays
- * 		-> Method would be called many times in most cases where an important decision is made 
+ * 	Modify / improve rejection method 
+ *  IMPLEMENT the go to next turn thing, / who wins thing
  * 	Implement the thing for choosing Merlin / Mordred in the end
- * 	Implement the kings token thing (use the index of the arrays?)
- * 
  *	IMPLEMENT PERCIVAL CHOOSING FOR TURN 4 AND 5
  * 
  * NOTES --> 10/10 to reduce code duplication, make the turn functions call a choosing thing depending
@@ -31,7 +27,6 @@ import java.util.*;
  * 		the same people as last -successful- turn may be funky
  * 
  * 		*** INCORPORATE THE MONTY HALL PROBLEM INTO GUESSING MORDRED --is this even possible? ***
- * 
  * CHANGELOG
  * 		
  */
@@ -151,8 +146,9 @@ public class game {
 		for (int i = 0; i < 7; i++) {
 			playerz[i].printCharacterAspects();
 		}
-		printer();
-		// goThroughTurns();
+		// trustChanger(42,3,5); trust changer succesful
+		//printer();
+		//goThroughTurns();
 	} // End beginGame7Player
 
 	/**
@@ -442,6 +438,80 @@ public class game {
 	} // End turn5Choose
 	
 	/**
+	 * Will handle the logic for quests 
+	 * IE) this many baddies = this many fails
+	 * IE) this turn, then blah blah
+	 * @param turnNumber --> the current turn
+	 */
+	public static void questHandler(int turnNumber){
+		// int numGood = 0; number of good people doesnt really matter
+		int numBad = 0; // Have all the power since good can only choose success
+		int random;
+		// Get the identities of the people in the chosen array
+		for (int i = 0; i < playersChosen.length; i++){
+			if (playersChosen[i] == 1){
+				if (playerz[i].getAlliance() == 1){
+					numBad++;
+				}
+			}
+		} // End the loop to look for em
+		if(turnNumber == 1){
+			random = randomNumber(1,100);
+			if (numBad == 1){
+				if (random > 85){
+					roundWin(1);
+				}
+				else{
+					roundWin(0);
+				}
+			} // End baddies
+			else{
+				roundWin(0);
+			}
+		} // end turn1
+		// Only special case for turn 4
+		else if (turnNumber == 4){
+			if(numBad >= 2){
+				roundWin(1);
+			}
+			else{
+				roundWin(0);
+			}
+		}
+		// Special case for baddies about to lose / about to win but not turn 4
+		else if (goodGuyWins == 2 || badGuyWins == 2){
+			if (numBad >= 1){
+				roundWin(1);
+			}
+		}
+		else{ // Made it through
+			if(numBad >=1){
+				random = randomNumber(1,100);
+				if (random < 69){
+					roundWin(1);
+				}
+			}
+			else{
+			roundWin(0);
+			}
+		}
+	} // End questHandler
+	
+	/**
+	 * Prints out who won the round and increments counter
+	 * @param win --> Integer where 0 means good won, 1 means bad won
+	 */
+	public static void roundWin(int win){
+		if(win == 0){
+			System.out.println("Good guys win this round");
+			goodGuyWins++;
+		}
+		else{
+			System.out.println("Bad guys win this round");
+			badGuyWins++;
+		}
+	} // End roundWin
+	/**
 	 * Purpose is to loop through the suspect array of who's choosing and choose
 	 * the appropriate adventurers 
 	 * @param numberToPick -> The amount of adventures to pick
@@ -644,6 +714,18 @@ public class game {
 		int number = (int)(Math.random()*range)+min;
 		return number;
 	}
+	
+	/**
+	 * Basically the changeArray in the genericPlayer class
+	 * @param amountChanged --> The amount of lost or gained trust
+	 * @param defender --> The person's personal trust array
+	 * @param offender --> The index id of who's getting their "100" lowered / upped
+	 */
+	public static void trustChanger(int amountChanged, int defender, int offender) {
+		playerz[defender].changeArray(offender, amountChanged);
+	}
+	
+	
 	/**
 	 * Method currently used for the endgame where the losing team must snipe
 	 * the enemy leader -Aside- this can also eventually be used for Lady of the
