@@ -27,6 +27,8 @@ import java.util.*;
  * 		the same people as last -successful- turn may be funky
  * 
  * 		*** INCORPORATE THE MONTY HALL PROBLEM INTO GUESSING MORDRED --is this even possible? ***
+ * 		^^ After giving it a thought, the Monty Hall problem is situational, it rides on the idea
+ * 		   it wouldnt work if they picked the person not Morgana	
  * CHANGELOG
  * 		
  */
@@ -196,6 +198,7 @@ public class game {
 				}
 				whoIsKing++; // If not out of the loop, then put the next person as the King
 				Arrays.fill(playersChosen, 0); // Re-initialize everything to zero
+				System.out.println("The quest doers have been reset.");
 			} // End the rejection loop
 			
 			// Step 3, check the results of the quest, remember, turn 4 needs 2 fails
@@ -209,7 +212,8 @@ public class game {
 				chooseMordred();
 			}
 			// Step 5, reset the "selection" array to all zeros, as if no one was chosen
-			Arrays.fill(playersChosen, 0); // Chosen array now has no one in it
+			Arrays.fill(playersChosen, 0); // Chosen array now has no one in it it went through
+			System.out.println("The quest went through, chosen is now zero");
 		} // End turns loop
 	} // End goThroughTurns
 
@@ -441,6 +445,7 @@ public class game {
 	 * Will handle the logic for quests 
 	 * IE) this many baddies = this many fails
 	 * IE) this turn, then blah blah
+	 * 
 	 * @param turnNumber --> the current turn
 	 */
 	public static void questHandler(int turnNumber){
@@ -458,7 +463,8 @@ public class game {
 		if(turnNumber == 1){
 			random = randomNumber(1,100);
 			if (numBad == 1){
-				if (random > 85){
+				if (random > 85){ 
+						// The rng element where the bad guy decides to lose first round
 					roundWin(1);
 				}
 				else{
@@ -499,6 +505,7 @@ public class game {
 	
 	/**
 	 * Prints out who won the round and increments counter
+	 * After round win, should probably call something that has trustChange
 	 * @param win --> Integer where 0 means good won, 1 means bad won
 	 */
 	public static void roundWin(int win){
@@ -533,6 +540,7 @@ public class game {
 						+ " for the adventure");
 				playersChosen[i] = 1; // Select them
 				numberChosen++; // Increment
+				trustChanger(20, i, whoChooses);
 			}
 		}
 	} // End loop2Choose
@@ -577,6 +585,7 @@ public class game {
 				System.out.println("Player " + whoChooses + " has chosen player " + i 
 						+ " for the adventure");
 				numberChosen++;
+				// No need to have trust changer here because it's bad choosing bad
 				i++; // Increment
 			}
 		}
@@ -599,6 +608,8 @@ public class game {
 				numberChosen++;
 				System.out.println("Player " + whoChooses + " has chosen player " + i 
 						+ " for the adventure");
+				// Have the person trust this guy
+				trustChanger(15, i, whoChooses);
 			}
 		}
 	} // End loop2ChooseBad
@@ -666,11 +677,14 @@ public class game {
 						timesRejected++; // Strike!
 						System.out.println("Player " + j + " has rejected player " 
 								+ i + ".");
+						trustChanger((-30), i, j);
+						// Easier to lose trust, -30 might be too much
 						// Call something to reduce trust between two people here?
 						}
 					else{
-						System.out.println("Nah you seem like a good guy");
-						// add build trust here
+						System.out.println("Nah you player " + i +" seem like a good guy");
+						// add build trust here just a little
+						trustChanger(5, i, j);
 					}
 				}
 				else{ // Not so guuci
@@ -681,15 +695,21 @@ public class game {
 								+ i + ".");
 						// no reduce trust here (because both are bad guys)
 						// instead have this build trust with the people who also disagree
+						// ^ implement later, kinda difficult
+						// maybe in a whoElseDisagrees function or something
 					}
 					else if(playerz[i].getAlliance() == 0 && randomBehav <= 2){ // 20% chance to reject good
 						timesRejected++; // Strike!
 						System.out.println("Player.. ps Im bad " + j + " has rejected player " 
 								+ i + ".");
+						trustChanger((-31),i,j);
+						// -31 just for intuitions sake?
 						// have rejected persons trust decreased towards this -bad- guy
 					}
 					else{
-						System.out.println("Nah you seem like a good guy. PS im bad");
+						System.out.println("Nah you player" + i + " seem like a good guy. PS "
+								+ "im bad" + " I am player " + j);
+						trustChanger(5,i,j);
 						// add build trust
 					}
 				}
@@ -697,6 +717,10 @@ public class game {
 			if (timesRejected >= maxReject){
 				System.out.println("Player " + i + " has been rejected by the majority."); 
 				// Maybe instead return a number ?
+				for (int j = 0; j <playerz.length; j++){
+					trustChanger((-5),i,j);
+					// This might be a little too much in tandem with the initial -30 from rejecting
+				}
 				return false; // Majority says no to person x to going on mission
 			}
 		} // End looping through playersChosen
@@ -807,6 +831,25 @@ public class game {
 		// Mordred
 		// It falls on a 50/50 where Percival knows who Mordred is but not
 		// identity of other 2
+		int perci = 0;
+		for (int i = 0; i < playerz.length; i++){
+			if (playerz[i].getCharacterN().equals("Percival")){
+				// Rediscover who percival is 
+				perci = i;
+			}
+		}
+		int perciSus[] = playerz[perci].getSuspects();
+		// rip me have to do another for loop
+		for (int i = 0; i < perciSus.length; i++){
+			if(perciSus[i] <0 && playerz[i].getAlliance() ==1){
+				// This was morgana
+				System.out.println("This player" + i + " is Morgana.");
+			}
+			else if (playerz[i].getAlliance() == 1){
+				// They are either bad 1 or bad 2
+				int randomItUp
+			}
+		}
 		return theDecision;
 	} // End chooseMordred
-} // End game.java
+} // End game.java	
