@@ -4,7 +4,9 @@ import java.util.*;
 /*
  * Rules to "Avalon" may be found here --> http://upload.snakesandlattes.com/rules/r/ResistanceAvalon.pdf
  * WHICH FUNCTIONS WORK?
- * 	randomInt, printer, main, beginGame, generate7Player, generateSinglePlayer
+ * 	randomInt, printer, main, beginGame, generate7Player, generateSinglePlayer,turn1-5choose, trustChanger,
+ *  chooseMerlin,chooseMordred,endGame,checkPlayer, randomNumber, loop2Choose, loop2ChooseBad, rejection
+ *  questHandler, roundWin
  * WHAT IN THE CLASS WORKS?
  * 	all of em, to do operations on the array use the changeArray funct in the genericPlayer class
  * 	
@@ -14,7 +16,6 @@ import java.util.*;
  * TODO
  * 	Modify / improve rejection method 
  *  IMPLEMENT the go to next turn thing, / who wins thing
- * 	Implement the thing for choosing Merlin / Mordred in the end
  *	IMPLEMENT PERCIVAL CHOOSING FOR TURN 4 AND 5
  * 
  * NOTES --> 10/10 to reduce code duplication, make the turn functions call a choosing thing depending
@@ -30,7 +31,7 @@ import java.util.*;
  * 		^^ After giving it a thought, the Monty Hall problem is situational, it rides on the idea
  * 		   it wouldnt work if they picked the person not Morgana	
  * CHANGELOG
- * 		
+ * 	Finished chooseMordred,chooseMorgana to decent quality
  */
 
 public class game {
@@ -148,9 +149,8 @@ public class game {
 		for (int i = 0; i < 7; i++) {
 			playerz[i].printCharacterAspects();
 		}
-		// trustChanger(42,3,5); trust changer succesful
-		//printer();
-		//goThroughTurns();
+		// printer();
+		// goThroughTurns();
 	} // End beginGame7Player
 
 	/**
@@ -198,7 +198,7 @@ public class game {
 				}
 				whoIsKing++; // If not out of the loop, then put the next person as the King
 				Arrays.fill(playersChosen, 0); // Re-initialize everything to zero
-				System.out.println("The quest doers have been reset.");
+				System.out.println("The quest-doers have been reset.");
 			} // End the rejection loop
 			
 			// Step 3, check the results of the quest, remember, turn 4 needs 2 fails
@@ -815,7 +815,26 @@ public class game {
 		int theDecision = 0;
 		// Insert code here to have the bad guys choose Merlin
 		// As of right now always guesses person 0
-		return theDecision;
+		// All baddies have exact same AI, therefore, they just one of them has to guess
+		int theChooser=0;
+		for (int i = 0; i <7; i++){ // Find the bad
+			if (playerz[i].getAlliance() == 1){
+				theChooser = i;
+				break;
+			}
+		}
+		int[] theArray = playerz[theChooser].getSuspects(); // get their opinion
+		int greatestAmntSuspect = 100;
+		for (int i = 0; i < 7; i++){
+			if (playerz[i].getAlliance() == 0){
+				if (greatestAmntSuspect > theArray[i]){
+					greatestAmntSuspect = theArray[i]; // change the new lowest
+					theDecision = i; 
+				}
+			}
+		} // End the decision loop
+		  // theDecision, should now be the most suspected person
+	return theDecision;
 	} // End chooseMerlin
 
 	/**
@@ -834,7 +853,7 @@ public class game {
 		int perci = 0;
 		for (int i = 0; i < playerz.length; i++){
 			if (playerz[i].getCharacterN().equals("Percival")){
-				// Rediscover who percival is 
+				// Get percival so he can choose
 				perci = i;
 			}
 		}
@@ -846,8 +865,8 @@ public class game {
 				System.out.println("This player" + i + " is Morgana.");
 			}
 			else if (playerz[i].getAlliance() == 1){
-				// They are either bad 1 or bad 2
-				int randomItUp
+				// If the person is not Morgana and is bad, just go for the fity fity
+				return i;
 			}
 		}
 		return theDecision;
